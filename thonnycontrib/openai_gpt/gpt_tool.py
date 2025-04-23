@@ -137,7 +137,7 @@ class GPTChatView(ttk.Frame):
             else:
                 prefix = api_key[:5]
                 suffix = api_key[-5:]
-                stars = "*" * (len(api_key) - 40)
+                stars = "*" * (len(api_key) - 10)  # 修正計算星號數量的公式
                 masked_key = f"{prefix}{stars}{suffix}"
             
             message = f"當前 API Key: {masked_key}\n請輸入 OpenAI API 金鑰:"
@@ -167,9 +167,10 @@ class GPTChatView(ttk.Frame):
         self.messages = self.config.get("chat_history", [])
         self.api_key = self.config.get("api_key", "")
         
-        self.model_var = tk.StringVar(value=self.config.get("model", "gpt-3.5-turbo"))
-        self.temp_var = tk.DoubleVar(value=self.config.get("temperature", 0.7))
-        self.max_tokens_var = tk.IntVar(value=self.config.get("max_tokens", 1000))
+        # 確保正確載入模型設定
+        self.model_var = tk.StringVar(value=self.config.get("model", DEFAULT_CONFIG["model"]))
+        self.temp_var = tk.DoubleVar(value=self.config.get("temperature", DEFAULT_CONFIG["temperature"]))
+        self.max_tokens_var = tk.IntVar(value=self.config.get("max_tokens", DEFAULT_CONFIG["max_tokens"]))
         
         self._init_ui()
         self._load_chat_history()
@@ -257,14 +258,34 @@ class GPTChatView(ttk.Frame):
     
     def _show_settings(self):
         """顯示設定對話框"""
-        api_key = simpledialog.askstring("API 設定", "請輸入OpenAI API金鑰:", 
-                                         initialvalue=self.api_key, show="*")
+        # 準備顯示的遮蔽版 API Key
+        masked_key = ""
+        if self.api_key:
+            # 只顯示前5個和後5個字元，中間用星號替代
+            if len(self.api_key) <= 10:
+                masked_key = self.api_key  # 如果太短就完整顯示
+            else:
+                prefix = self.api_key[:5]
+                suffix = self.api_key[-5:]
+                stars = "*" * (len(self.api_key) - 10)
+                masked_key = f"{prefix}{stars}{suffix}"
+            
+            message = f"當前 API Key: {masked_key}\n請輸入 OpenAI API 金鑰:"
+        else:
+            message = "請輸入 OpenAI API 金鑰:"
+        
+        api_key = simpledialog.askstring(
+            "API 設定", 
+            message,
+            initialvalue=self.api_key, 
+            show="*"
+        )
+        
         if api_key is not None:
             self.api_key = api_key
             self.config["api_key"] = api_key
-            save_config(self.config)
             
-            # 更新溫度和令牌數
+            # 更新其他設定
             self.config["temperature"] = self.temp_var.get()
             self.config["max_tokens"] = self.max_tokens_var.get()
             self.config["model"] = self.model_var.get()

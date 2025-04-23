@@ -1,7 +1,7 @@
 # Thonny OpenAI GPT 助手插件
 
 這是一個為 Thonny IDE 設計的 OpenAI GPT 助手插件，提供智能聊天和程式碼分析功能。
-
+![alt text](demo.png)
 ## 功能特色
 
 - 集成 GPT 聊天側邊面板
@@ -36,19 +36,15 @@
 
 3. 重啟 Thonny IDE
 
-### 方法 3: 從 PyPI 安裝 (如果已發布)
+### 方法 3: 從 PyPI 安裝
 
 1. 在 Thonny 的工具選單 -> 管理套件 中搜尋 "thonny-openai-gpt" 並安裝
-2. 或使用命令行：
-   ```bash
-   pip3 install -e /Users/oliver/code/thonny_openai_gpt
-   ```
 
 ## 使用方式
 
 1. 安裝後，您可以在「檢視」選單中找到「GPT聊天」側邊面板
 2. 也可以在「工具」選單中找到「GPT助手（對話框）」選項
-3. 首次使用時，需要設定您的 OpenAI API 金鑰
+3. 首次使用時，需要設定您的 OpenAI API 金鑰 重新啟動Thonny
 
 ## 設定 API 金鑰
 
