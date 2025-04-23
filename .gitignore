@@ -1,0 +1,40 @@
+# ~/.git-templates/.gitignore
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+.venv
+Pipfile.lock
+poetry.lock
+
+# C/C++ 編譯產物
+*.o
+*.obj
+*.elf
+*.a
+*.so
+*.out
+*.exe
+
+# log 檔案
+*.log
+*.log.*
+
+# editor
+*.swp
+*~
+.vscode/
+.idea/
