@@ -137,7 +137,7 @@ class GPTChatView(ttk.Frame):
             else:
                 prefix = api_key[:5]
                 suffix = api_key[-5:]
-                stars = "*" * (len(api_key) - 10)
+                stars = "*" * (len(api_key) - 40)
                 masked_key = f"{prefix}{stars}{suffix}"
             
             message = f"當前 API Key: {masked_key}\n請輸入 OpenAI API 金鑰:"
@@ -306,18 +306,30 @@ class GPTChatView(ttk.Frame):
             messagebox.showerror("錯誤", "請先設定OpenAI API金鑰")
             return
             
-        text = self.input_field.get("1.0", tk.END).strip()
-        if not text:
+        # 獲取原始輸入文本
+        original_text = self.input_field.get("1.0", tk.END).strip()
+        if not original_text:
             return
-            
+        
         # 清空輸入框
         self.input_field.delete("1.0", tk.END)
         
-        # 顯示用戶訊息
-        self._display_user_message(text)
+        # 添加說明前綴到實際發送給 API 的文本
+        if "```python" in original_text or "請分析這段程式碼" in original_text:
+            # 如果已經包含程式碼塊，添加 Thonny IDE 相關上下文
+            prompt_prefix = "我正在使用 Thonny IDE 編寫 Python 程式碼。以下是我想請你分析或協助的程式碼："
+            text_to_display = original_text
+            text_to_send = f"{prompt_prefix}\n\n{original_text}"
+        else:
+            # 一般的對話內容
+            text_to_display = original_text
+            text_to_send = original_text
         
-        # 將用戶訊息加入對話歷史
-        self.messages.append({"role": "user", "content": text})
+        # 顯示用戶訊息 (顯示原始文本，不包含前綴)
+        self._display_user_message(text_to_display)
+        
+        # 將添加了前綴的訊息加入對話歷史
+        self.messages.append({"role": "user", "content": text_to_send})
         
         # 顯示等待訊息
         self.chat_display.config(state=tk.NORMAL)
