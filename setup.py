@@ -2,7 +2,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name="thonny-openai-gpt",
-    version="0.1.21",
+    version="0.1.24",
     description="OpenAI GPT 助手插件 for Thonny IDE",
     long_description="""
     Thonny IDE 的 OpenAI GPT 助手插件，提供聊天面板和程式碼分析功能。

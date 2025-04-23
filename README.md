@@ -1,3 +1,72 @@
+# Thonny OpenAI GPT Assistant Plugin
+
+This is an OpenAI GPT assistant plugin designed for Thonny IDE, providing intelligent chat and code analysis functionality.
+![alt text](demo.png)
+
+## Features
+
+- Integrated GPT chat sidebar
+- Code analysis and suggestions
+- Adjustable AI model parameters
+- Support for GPT-3.5 and GPT-4 models
+- Save chat history
+- Simple dialog mode
+
+## Installation
+
+### Method 1: Manual Installation
+
+1. Copy the entire `thonny_openai_gpt` directory to one of the following locations:
+   - `~/.thonny/plugins/` (user-specific installation)
+   - Under `Lib/site-packages/` in the Thonny installation directory (global installation)
+
+2. Restart Thonny IDE, the plugin will load automatically
+
+### Method 2: Install from PyPI (Recommended)
+
+1. In Thonny's Tools menu -> Manage packages, search for "thonny-openai-gpt" and install
+
+## Usage
+
+1. After installation, you can find the "GPT Chat" sidebar in the "View" menu
+2. You can also find the "GPT Assistant (Dialog)" option in the "Tools" menu
+3. The first time you use it, you need to set your OpenAI API key and restart Thonny
+
+## Setting up API Key
+
+1. In the GPT chat sidebar, click the ⚙️ button in the top right corner
+2. Enter your OpenAI API key
+3. The key will be encrypted and stored in the local configuration file
+
+### How to Get an OpenAI API Key
+
+1. Go to the [OpenAI API website](https://openai.com/api/)
+2. Register or log in to your OpenAI account
+3. Click the "Profile" icon in the upper right corner and select "View API keys"
+4. Click the "Create new secret key" button
+5. Name your key, then click "Create secret key"
+6. Copy the generated API key (note that you can only view it once)
+7. Paste this key into the settings of the Thonny OpenAI GPT Assistant Plugin
+
+Note: The OpenAI API is a paid service, and you need to set up a payment method on the OpenAI platform. New users may receive a certain amount of free usage credits.
+
+## System Requirements
+
+- Thonny 3.0 or higher
+- Python 3.7 or higher
+- Network connection (for API calls)
+- OpenAI API key
+
+## License
+
+MIT License
+
+## Author
+
+Oliver0804 - icetzsr@gmail.com
+
+---
+
 # Thonny OpenAI GPT 助手插件
 
 這是一個為 Thonny IDE 設計的 OpenAI GPT 助手插件，提供智能聊天和程式碼分析功能。
