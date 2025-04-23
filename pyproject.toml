@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thonny-openai-gpt"
+version = "0.1.12"
+description = "OpenAI GPT 助手插件 for Thonny IDE"
+readme = "README.md"
+authors = [
+    {name = "Oliver0804", email = "icetzsr@gmail.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Plugins",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+]
+dependencies = ["openai>=1.75.0"]
+requires-python = ">=3.7"
+
+[project.entry-points."thonny.plugins"]
+openai_gpt = "thonnycontrib.openai_gpt"
