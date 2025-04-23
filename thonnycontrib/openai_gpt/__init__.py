@@ -12,17 +12,17 @@ def load_plugin():
     try:
         wb = get_workbench()
         
-        # 註冊視圖
-        wb.add_view(GPTChatView, "GPT聊天", "se")
+        # 註冊視圖 - 使用 GPTChatView 作為視圖識別符，以便在程式中能夠找到它
+        wb.add_view(GPTChatView, "GPT聊天", "se", default_position_key="se")
         
-        # 註冊命令 (同時加入選單項目)
+        # 註冊命令 (改為更簡短更貼切的描述)
         wb.add_command(
             command_id="gpt_assistant",
             menu_name="tools",
-            command_label="GPT 助手對話",
+            command_label="開啟 GPT 助手分析",
             handler=gpt_assistant,
-            include_in_toolbar=False,
-            caption="GPT 助手對話"
+            include_in_toolbar=True,  # 加入工具列方便快速訪問
+            caption="開啟GPT助手分析當前程式碼"
         )
         
         # 添加設定 API Key 的選單項目

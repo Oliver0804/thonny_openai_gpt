@@ -106,6 +106,8 @@ class GPTChatView(ttk.Frame):
         self.input_field = scrolledtext.ScrolledText(input_frame, wrap=tk.WORD, width=40, height=4)
         self.input_field.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         self.input_field.bind("<Control-Return>", self._send_message)
+        # 添加按 Enter 鍵發送訊息的功能
+        self.input_field.bind("<Return>", self._handle_return)
         
         # 按鈕框架
         button_frame = ttk.Frame(input_frame)
@@ -178,7 +180,7 @@ class GPTChatView(ttk.Frame):
             return
             
         if not self.api_key:
-            messagebox.showerror("錯誤", "請先設定OpenAI API金鑰")
+            messagebox.showerror("錯誤", "請先設定OpenAI API金鑰 設定後重啟Thonny")
             return
             
         text = self.input_field.get("1.0", tk.END).strip()
@@ -291,6 +293,12 @@ class GPTChatView(ttk.Frame):
         except Exception as e:
             messagebox.showerror("錯誤", f"無法獲取當前程式碼: {str(e)}")
 
+    def _handle_return(self, event):
+        """處理按下 Enter 鍵的事件"""
+        if not event.state & 0x0004:  # 檢查是否未按下 Control 鍵
+            self._send_message()
+            return "break"
+
 # 簡單對話框模式的GPT助手
 def gpt_assistant():
     """顯示簡單的GPT對話框"""
@@ -318,7 +326,7 @@ def gpt_assistant():
             use_code = messagebox.askyesno("程式碼分析", 
                                           "是否要將當前編輯器中的程式碼送給GPT分析？")
             if use_code:
-                code_context = (f"以下是我的Python程式碼，請幫我分析：\n"
+                code_context = (f"以下是我的Thonny Python程式碼，請幫我分析：\n"
                               f"```python\n{code}\n```\n")
     
     # 顯示對話框

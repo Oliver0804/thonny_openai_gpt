@@ -22,7 +22,7 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 # 預設配置
 DEFAULT_CONFIG = {
     "api_key": "",
-    "model": "gpt-3.5-turbo",
+    "model": "gpt-4.1-mini",  # 將預設模型更新為 o4-mini
     "temperature": 0.7,
     "max_tokens": 1000,
     "chat_history": []
@@ -30,6 +30,9 @@ DEFAULT_CONFIG = {
 
 # 確保配置目錄存在
 os.makedirs(CONFIG_DIR, exist_ok=True)
+
+# 全局變數，用於儲存GPTChatView的參考，方便從外部函數訪問
+_global_gpt_chat_view = None
 
 def get_editor_notebook():
     """獲取編輯器筆記本的替代方法"""
@@ -125,9 +128,25 @@ class GPTChatView(ttk.Frame):
         config = load_config()
         api_key = config.get("api_key", "")
         
+        # 準備顯示的遮蔽版 API Key (如果有的話)
+        masked_key = ""
+        if api_key:
+            # 只顯示前5個和後5個字元，中間用星號替代
+            if len(api_key) <= 10:
+                masked_key = api_key  # 如果太短就完整顯示
+            else:
+                prefix = api_key[:5]
+                suffix = api_key[-5:]
+                stars = "*" * (len(api_key) - 10)
+                masked_key = f"{prefix}{stars}{suffix}"
+            
+            message = f"當前 API Key: {masked_key}\n請輸入 OpenAI API 金鑰:"
+        else:
+            message = "請輸入 OpenAI API 金鑰:"
+        
         new_api_key = simpledialog.askstring(
             "API 設定", 
-            "請輸入 OpenAI API 金鑰:",
+            message,
             initialvalue=api_key,
             show="*"
         )
@@ -139,6 +158,10 @@ class GPTChatView(ttk.Frame):
     
     def __init__(self, master):
         super().__init__(master)
+        
+        # 設置全局變數，以便其他函數能夠訪問這個實例
+        global _global_gpt_chat_view
+        _global_gpt_chat_view = self
         
         self.config = load_config()
         self.messages = self.config.get("chat_history", [])
@@ -162,8 +185,21 @@ class GPTChatView(ttk.Frame):
         
         # 模型選擇
         ttk.Label(control_frame, text="模型:").pack(side=tk.LEFT, padx=(0, 5))
+        
+        # 更新模型選項，添加最新的 OpenAI 模型
         model_menu = ttk.Combobox(control_frame, textvariable=self.model_var, 
-                                 values=["gpt-3.5-turbo", "gpt-4"], width=12)
+                                 values=[
+                                     "gpt-4.1-mini",
+                                     "o4-mini",      # 預設，2025 推出的推理模型
+                                     "gpt-4o",       # 多模態旗艦模型
+                                     "gpt-4o-mini",  # GPT-4o 的輕量版
+                                     "gpt-4.1",      # 更新版本，指令遵循和長上下文更優
+                                     "gpt-4-turbo",  # 速度更快的 GPT-4
+                                     "gpt-4",        # 傳統 GPT-4 模型
+                                     "o3",           # OpenAI o 系列
+                                     "gpt-3.5-turbo" # 舊版但仍受支援的模型
+                                 ], 
+                                 width=12)
         model_menu.pack(side=tk.LEFT, padx=(0, 10))
         
         # 溫度控制
@@ -194,6 +230,7 @@ class GPTChatView(ttk.Frame):
         self.input_field = scrolledtext.ScrolledText(input_frame, wrap=tk.WORD, width=40, height=4)
         self.input_field.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         self.input_field.bind("<Control-Return>", self._send_message)
+        self.input_field.bind("<Return>", self._handle_return)
         
         # 按鈕框架
         button_frame = ttk.Frame(input_frame)
@@ -404,94 +441,69 @@ class GPTChatView(ttk.Frame):
                 messagebox.showinfo("提示", "請先打開一個程式碼檔案")
         except Exception as e:
             messagebox.showerror("錯誤", f"無法獲取當前程式碼: {str(e)}")
+    
+    def prepare_code_analysis(self):
+        """準備程式碼分析，如果有程式碼，則將其插入輸入框並聚焦視窗"""
+        editor = get_current_editor()
+        if editor:
+            code = get_editor_text(editor)
+            if code and code.strip():
+                # 將程式碼加到輸入框
+                current_text = "```python\n" + code + "```\n\n請分析這段程式碼：\n"
+                
+                self.input_field.delete("1.0", tk.END)
+                self.input_field.insert("1.0", current_text)
+                
+                # 聚焦輸入框
+                self.input_field.focus_set()
+                
+                # 確保此面板是可見的
+                wb = get_workbench()
+                wb.show_view("GPTChatView")
+                
+                return True
+        return False
 
-# 簡單對話框模式的GPT助手
+    def _handle_return(self, event):
+        """處理按下 Enter 鍵的事件"""
+        # 檢查是否單純按下 Enter 鍵（沒有同時按下 Ctrl 或其他修飾鍵）
+        if not (event.state & 0x0004):  # 0x0004 代表 Control 鍵
+            # 獲取當前文本內容
+            text = self.input_field.get("1.0", tk.END).strip()
+            
+            # 如果內容不為空，則發送訊息
+            if text:
+                self._send_message()
+                return "break"  # 阻止原始 Enter 鍵行為（換行）
+            else:
+                # 如果輸入框為空，則允許換行（正常行為）
+                return None
+        # 對於 Ctrl+Enter，保持原有的行為（添加新行）
+        return None
+
+# 簡單對話框模式的GPT助手 - 現在改為顯示右側面板
 def gpt_assistant():
-    """顯示簡單的GPT對話框"""
+    """顯示 GPT 助手聊天視窗 (現在是顯示右側面板)"""
+    global _global_gpt_chat_view
+    
     if not OPENAI_AVAILABLE:
         messagebox.showerror("錯誤", "請安裝OpenAI套件: pip install openai")
         return
-        
-    config = load_config()
-    api_key = config.get("api_key", "")
     
-    if not api_key:
-        api_key = simpledialog.askstring("API 設定", "請輸入OpenAI API金鑰:", show="*")
-        if not api_key:
-            return
-        
-        config["api_key"] = api_key
-        save_config(config)
+    # 如果側邊面板尚未創建，先確保它可見
+    wb = get_workbench()
+    wb.show_view("GPTChatView")
     
-    # 獲取當前編輯器中的代碼
-    code_context = ""
-    editor = get_current_editor()
-    
-    if editor:
-        code = get_editor_text(editor)
-        if code and code.strip():
-            use_code = messagebox.askyesno("程式碼分析", 
-                                        "是否要將當前編輯器中的程式碼送給GPT分析？")
-            if use_code:
-                code_context = (f"以下是我的Python程式碼，請幫我分析：\n"
-                             f"```python\n{code}\n```\n")
-    
-    # 顯示對話框
-    prompt_text = code_context if code_context else ""
-    prompt = simpledialog.askstring("GPT對話", "輸入你要問GPT的內容：",
-                                 initialvalue=prompt_text)
-    
-    if prompt:
-        try:
-            # 判斷是舊版還是新版 API
-            openai_version = getattr(openai, "__version__", "0.0.0")
-            is_new_version = int(openai_version.split('.')[0]) >= 1
-            
-            model = config.get("model", "gpt-3.5-turbo")
-            temperature = config.get("temperature", 0.7)
-            max_tokens = config.get("max_tokens", 1000)
-            
-            # 根據版本使用對應的 API 方法
-            if is_new_version:
-                # 新版 API (1.0.0 及以上)
-                client = openai.OpenAI(api_key=api_key)
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
-                answer = response.choices[0].message.content
-            else:
-                # 舊版 API (0.x.x)
-                openai.api_key = api_key
-                response = openai.ChatCompletion.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
-                answer = response.choices[0].message.content
-            
-            # 顯示回覆
-            result_dialog = tk.Toplevel()
-            result_dialog.title("GPT 回應")
-            result_dialog.geometry("600x400")
-            
-            # 建立回覆顯示框
-            result_text = scrolledtext.ScrolledText(result_dialog, wrap=tk.WORD)
-            result_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-            result_text.insert(tk.END, answer)
-            result_text.config(state=tk.DISABLED)
-            
-            # 複製按鈕
-            def copy_to_clipboard():
-                result_dialog.clipboard_clear()
-                result_dialog.clipboard_append(answer)
-                messagebox.showinfo("已複製", "回應已複製到剪貼簿")
-            
-            copy_button = ttk.Button(result_dialog, text="複製到剪貼簿", command=copy_to_clipboard)
-            copy_button.pack(pady=10)
-            
-        except Exception as e:
-            messagebox.showerror("錯誤", str(e))
+    # 如果側邊面板實例存在，直接使用它
+    if _global_gpt_chat_view:
+        # 詢問是否要分析當前代碼
+        editor = get_current_editor()
+        if editor:
+            code = get_editor_text(editor)
+            if code and code.strip():
+                use_code = messagebox.askyesno("程式碼分析", 
+                                         "是否要將當前編輯器中的程式碼送給GPT分析？")
+                if use_code:
+                    _global_gpt_chat_view.prepare_code_analysis()
+    else:
+        messagebox.showinfo("提示", "請先開啟 GPT 聊天視窗 (在「檢視」選單中)")
