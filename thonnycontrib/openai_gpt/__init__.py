@@ -1,38 +1,53 @@
 """
-Thonny OpenAI GPT 助手插件 - 提供聊天面板和程式碼分析功能
+Thonny OpenAI GPT Assistant Plugin - Provides chat panel and code analysis capabilities
 """
 
+import webbrowser
 from thonny import get_workbench
 from thonnycontrib.openai_gpt.gpt_tool import GPTChatView, gpt_assistant
 
+def open_github_issues():
+    """Open GitHub issues page"""
+    webbrowser.open("https://github.com/Oliver0804/thonny_openai_gpt/issues")
+
 def load_plugin():
-    """載入插件，註冊命令和工具列按鈕"""
-    print("Loading thonny-openai-gpt plugin...")  # 加入日誌輸出
+    """Load plugin, register commands and toolbar buttons"""
+    print("Loading thonny-openai-gpt plugin...")  # Add log output
     
     try:
         wb = get_workbench()
         
-        # 註冊視圖 - 使用 GPTChatView 作為視圖識別符，以便在程式中能夠找到它
-        wb.add_view(GPTChatView, "GPT聊天", "se", default_position_key="se")
+        # Register view - Use GPTChatView as view identifier for reference in code
+        wb.add_view(GPTChatView, "GPT Chat", "se", default_position_key="se")
         
-        # 註冊命令 (改為更簡短更貼切的描述)
+        # Register command (with concise description)
         wb.add_command(
             command_id="gpt_assistant",
             menu_name="tools",
-            command_label="開啟 GPT 助手分析",
+            command_label="Open GPT Assistant",
             handler=gpt_assistant,
-            include_in_toolbar=True,  # 加入工具列方便快速訪問
-            caption="開啟GPT助手分析當前程式碼"
+            include_in_toolbar=True,  # Add to toolbar for quick access
+            caption="Analyze current code with GPT"
         )
         
-        # 添加設定 API Key 的選單項目
+        # Add API Key settings menu item
         wb.add_command(
             command_id="gpt_settings",
             menu_name="tools",
-            command_label="設定 GPT API Key",
+            command_label="Set GPT API Key",
             handler=lambda: GPTChatView.show_api_key_dialog(),
             include_in_toolbar=False,
-            caption="設定 GPT API Key"
+            caption="Set GPT API Key"
+        )
+        
+        # Add Report Issues menu item
+        wb.add_command(
+            command_id="gpt_report_issue",
+            menu_name="tools",
+            command_label="Report Issues",
+            handler=open_github_issues,
+            include_in_toolbar=False,
+            caption="Report issues on GitHub"
         )
         
         print("thonny-openai-gpt plugin loaded successfully.")

@@ -21,22 +21,8 @@
 
 2. 重啟 Thonny IDE，插件將自動載入
 
-### 方法 2: 使用 pip 安裝
 
-1. 建立 wheel 檔：
-   ```bash
-   python setup.py bdist_wheel
-   ```
-
-2. 安裝生成的 wheel 檔：
-   ```bash
-   
-   
-   ```
-
-3. 重啟 Thonny IDE
-
-### 方法 3: 從 PyPI 安裝
+### 方法 2: 從 PyPI 安裝 (推薦)
 
 1. 在 Thonny 的工具選單 -> 管理套件 中搜尋 "thonny-openai-gpt" 並安裝
 
@@ -51,6 +37,18 @@
 1. 在 GPT 聊天側邊面板中，點擊右上角的 ⚙️ 按鈕
 2. 輸入您的 OpenAI API 金鑰
 3. 金鑰將加密儲存在本地配置檔案中
+
+### 如何獲取 OpenAI API 金鑰
+
+1. 前往 [OpenAI API 網站](https://openai.com/api/)
+2. 註冊或登入您的 OpenAI 帳戶
+3. 點擊右上角的「個人資料」圖示，選擇「View API keys」
+4. 點擊「Create new secret key」按鈕
+5. 為您的金鑰命名，然後點擊「Create secret key」
+6. 複製生成的 API 金鑰（請注意，您只能查看一次）
+7. 將此金鑰貼入 Thonny OpenAI GPT 助手插件的設定中
+
+注意：OpenAI API 是一項付費服務，您需要在 OpenAI 平台上設定付款方式。新用戶可能會獲得一定額度的免費使用額度。
 
 ## 系統需求
 

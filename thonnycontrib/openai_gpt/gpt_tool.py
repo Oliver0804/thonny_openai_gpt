@@ -12,38 +12,38 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
-# 只導入確定可用的函數
+# Import only the necessary functions
 from thonny import get_workbench, get_shell
 
-# 配置檔案路徑
+# Configuration file paths
 CONFIG_DIR = os.path.join(str(Path.home()), ".thonny", "gpt_config")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
-# 預設配置
+# Default configuration
 DEFAULT_CONFIG = {
     "api_key": "",
-    "model": "gpt-4.1-mini",  # 將預設模型更新為 o4-mini
+    "model": "gpt-4.1-mini",  # Default model updated to gpt-4.1-mini
     "temperature": 0.7,
     "max_tokens": 1000,
     "chat_history": []
 }
 
-# 確保配置目錄存在
+# Ensure config directory exists
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
-# 全局變數，用於儲存GPTChatView的參考，方便從外部函數訪問
+# Global variable to store GPTChatView reference for external function access
 _global_gpt_chat_view = None
 
 def get_editor_notebook():
-    """獲取編輯器筆記本的替代方法"""
+    """Alternative method to get editor notebook"""
     wb = get_workbench()
     try:
-        # Thonny 4.0 之後的方法
+        # Method for Thonny 4.0+
         editor_notebook = wb.get_editor_notebook()
         return editor_notebook
     except Exception:
         try:
-            # 尋找編輯器筆記本的其他可能方法
+            # Look for other possible methods to find editor notebook
             for attr_name in dir(wb):
                 if 'editor' in attr_name.lower():
                     editor_obj = getattr(wb, attr_name)
@@ -52,11 +52,11 @@ def get_editor_notebook():
         except Exception:
             pass
         
-        print("無法獲取編輯器筆記本，某些功能可能無法正常工作")
+        print("Unable to get editor notebook, some features may not work properly")
         return None
 
 def get_current_editor():
-    """獲取當前編輯器的通用方法"""
+    """Generic method to get the current editor"""
     try:
         editor_notebook = get_editor_notebook()
         if editor_notebook:
@@ -64,7 +64,7 @@ def get_current_editor():
     except Exception:
         pass
     
-    # 如果上面的方法失敗，嘗試從工作台直接獲取
+    # If the above method fails, try getting it directly from the workbench
     try:
         wb = get_workbench()
         if hasattr(wb, 'get_current_editor'):
@@ -75,12 +75,12 @@ def get_current_editor():
     return None
 
 def get_editor_text(editor):
-    """從編輯器獲取文本的通用方法"""
+    """Generic method to get text from editor"""
     if not editor:
         return None
     
     try:
-        # 嘗試多種可能的方法獲取編輯器文本
+        # Try multiple possible methods to get editor text
         methods = [
             lambda: editor.get_text_widget().get("1.0", tk.END),
             lambda: editor.get_text_content(),
@@ -98,12 +98,12 @@ def get_editor_text(editor):
             except (AttributeError, TypeError):
                 continue
     except Exception as e:
-        print(f"獲取編輯器文本時發生錯誤: {e}")
+        print(f"Error getting editor text: {e}")
     
     return None
 
 def load_config():
-    """載入配置檔案"""
+    """Load configuration file"""
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -114,38 +114,38 @@ def load_config():
         return DEFAULT_CONFIG.copy()
 
 def save_config(config):
-    """儲存配置檔案"""
+    """Save configuration file"""
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
 class GPTChatView(ttk.Frame):
-    """GPT 聊天側邊面板"""
+    """GPT Chat Side Panel"""
     
-    # 添加靜態方法，用於從選單直接設定 API Key
+    # Add static method for setting API Key directly from menu
     @classmethod
     def show_api_key_dialog(cls):
-        """顯示 API Key 設定對話框（靜態方法，可從選單直接調用）"""
+        """Show API Key settings dialog (static method, can be called directly from menu)"""
         config = load_config()
         api_key = config.get("api_key", "")
         
-        # 準備顯示的遮蔽版 API Key (如果有的話)
+        # Prepare masked version of API Key (if any)
         masked_key = ""
         if api_key:
-            # 只顯示前5個和後5個字元，中間用星號替代
+            # Show only the first 5 and last 5 characters, replace middle with asterisks
             if len(api_key) <= 10:
-                masked_key = api_key  # 如果太短就完整顯示
+                masked_key = api_key  # Show full if too short
             else:
                 prefix = api_key[:5]
                 suffix = api_key[-5:]
-                stars = "*" * (len(api_key) - 10)  # 修正計算星號數量的公式
+                stars = "*" * (len(api_key) - 10)  # Corrected formula for calculating number of asterisks
                 masked_key = f"{prefix}{stars}{suffix}"
             
-            message = f"當前 API Key: {masked_key}\n請輸入 OpenAI API 金鑰:"
+            message = f"Current API Key: {masked_key}\nEnter OpenAI API Key:"
         else:
-            message = "請輸入 OpenAI API 金鑰:"
+            message = "Enter OpenAI API Key:"
         
         new_api_key = simpledialog.askstring(
-            "API 設定", 
+            "API Settings", 
             message,
             initialvalue=api_key,
             show="*"
@@ -154,12 +154,12 @@ class GPTChatView(ttk.Frame):
         if new_api_key is not None:
             config["api_key"] = new_api_key
             save_config(config)
-            messagebox.showinfo("設定已儲存", "API 金鑰已成功儲存！")
+            messagebox.showinfo("Settings Saved", "API Key has been successfully saved!")
     
     def __init__(self, master):
         super().__init__(master)
         
-        # 設置全局變數，以便其他函數能夠訪問這個實例
+        # Set global variable so other functions can access this instance
         global _global_gpt_chat_view
         _global_gpt_chat_view = self
         
@@ -167,7 +167,7 @@ class GPTChatView(ttk.Frame):
         self.messages = self.config.get("chat_history", [])
         self.api_key = self.config.get("api_key", "")
         
-        # 確保正確載入模型設定
+        # Ensure model settings are correctly loaded
         self.model_var = tk.StringVar(value=self.config.get("model", DEFAULT_CONFIG["model"]))
         self.temp_var = tk.DoubleVar(value=self.config.get("temperature", DEFAULT_CONFIG["temperature"]))
         self.max_tokens_var = tk.IntVar(value=self.config.get("max_tokens", DEFAULT_CONFIG["max_tokens"]))
@@ -176,106 +176,106 @@ class GPTChatView(ttk.Frame):
         self._load_chat_history()
         
     def _init_ui(self):
-        """初始化使用者介面"""
+        """Initialize user interface"""
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         
-        # 頂部控制區域
+        # Top control area
         control_frame = ttk.Frame(self)
         control_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         
-        # 模型選擇
-        ttk.Label(control_frame, text="模型:").pack(side=tk.LEFT, padx=(0, 5))
+        # Model selection
+        ttk.Label(control_frame, text="Model:").pack(side=tk.LEFT, padx=(0, 5))
         
-        # 更新模型選項，添加最新的 OpenAI 模型
+        # Update model options, add the latest OpenAI models
         model_menu = ttk.Combobox(control_frame, textvariable=self.model_var, 
                                  values=[
-                                     "gpt-4.1-mini",
-                                     "o4-mini",      # 預設，2025 推出的推理模型
-                                     "gpt-4o",       # 多模態旗艦模型
-                                     "gpt-4o-mini",  # GPT-4o 的輕量版
-                                     "gpt-4.1",      # 更新版本，指令遵循和長上下文更優
-                                     "gpt-4-turbo",  # 速度更快的 GPT-4
-                                     "gpt-4",        # 傳統 GPT-4 模型
-                                     "o3",           # OpenAI o 系列
-                                     "gpt-3.5-turbo" # 舊版但仍受支援的模型
+                                     "gpt-4.1-mini",  # Default model
+                                     "o4-mini",       # 2025 inference model
+                                     "gpt-4o",        # Multimodal flagship model
+                                     "gpt-4o-mini",   # Lightweight version of GPT-4o
+                                     "gpt-4.1",       # Updated version with better instruction following and long context
+                                     "gpt-4-turbo",   # Faster GPT-4
+                                     "gpt-4",         # Traditional GPT-4 model
+                                     "o3",            # OpenAI o series
+                                     "gpt-3.5-turbo"  # Older but still supported model
                                  ], 
                                  width=12)
         model_menu.pack(side=tk.LEFT, padx=(0, 10))
         
-        # 溫度控制
-        ttk.Label(control_frame, text="溫度:").pack(side=tk.LEFT, padx=(0, 5))
+        # Temperature control
+        ttk.Label(control_frame, text="Temperature:").pack(side=tk.LEFT, padx=(0, 5))
         temp_scale = ttk.Scale(control_frame, from_=0, to=1, orient=tk.HORIZONTAL,
                               variable=self.temp_var, length=80)
         temp_scale.pack(side=tk.LEFT, padx=(0, 5))
         
-        # 設定按鈕
+        # Settings button
         settings_button = ttk.Button(control_frame, text="⚙️", width=3, command=self._show_settings)
         settings_button.pack(side=tk.RIGHT, padx=5)
         
-        # 清除按鈕
+        # Clear button
         clear_button = ttk.Button(control_frame, text="🗑️", width=3, command=self._clear_chat)
         clear_button.pack(side=tk.RIGHT, padx=5)
         
-        # 聊天顯示區域
+        # Chat display area
         self.chat_display = scrolledtext.ScrolledText(self, wrap=tk.WORD, width=40, height=20)
         self.chat_display.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
         self.chat_display.config(state=tk.DISABLED)
         
-        # 底部輸入區域和按鈕
+        # Bottom input area and buttons
         input_frame = ttk.Frame(self)
         input_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
         input_frame.columnconfigure(0, weight=1)
         
-        # 輸入框
+        # Input field
         self.input_field = scrolledtext.ScrolledText(input_frame, wrap=tk.WORD, width=40, height=4)
         self.input_field.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         self.input_field.bind("<Control-Return>", self._send_message)
         self.input_field.bind("<Return>", self._handle_return)
         
-        # 按鈕框架
+        # Button frame
         button_frame = ttk.Frame(input_frame)
         button_frame.grid(row=0, column=1, sticky="ns")
         
-        # 發送按鈕
-        send_button = ttk.Button(button_frame, text="發送", command=self._send_message)
+        # Send button
+        send_button = ttk.Button(button_frame, text="Send", command=self._send_message)
         send_button.pack(fill=tk.X, expand=True, pady=(0, 5))
         
-        # 插入程式碼按鈕
-        code_button = ttk.Button(button_frame, text="插入程式碼", command=self._insert_current_code)
+        # Insert code button
+        code_button = ttk.Button(button_frame, text="Insert Code", command=self._insert_current_code)
         code_button.pack(fill=tk.X, expand=True)
         
-        # 如果沒有設定API金鑰，顯示提示
+        # If API key is not set, show a notice
         if not self.api_key:
             self.after(500, self._show_api_key_notice)
     
     def _show_api_key_notice(self):
-        """顯示API金鑰未設定的提示"""
+        """Show notice if API key is not set"""
         self.chat_display.config(state=tk.NORMAL)
-        self.chat_display.insert(tk.END, "⚠️ 請點擊右上角的⚙️按鈕設定OpenAI API金鑰\n\n", "notice")
+        self.chat_display.insert(tk.END, "⚠️ Please click the ⚙️ button in the top right to set the OpenAI API key\n\n", "notice")
         self.chat_display.tag_configure("notice", foreground="red")
         self.chat_display.config(state=tk.DISABLED)
     
     def _show_settings(self):
-        """顯示設定對話框"""
-        # 準備顯示的遮蔽版 API Key
+        """Show settings dialog"""
+        # Prepare masked version of API Key
         masked_key = ""
         if self.api_key:
-            # 只顯示前5個和後5個字元，中間用星號替代
+            # Show only the first 5 and last 5 characters, replace middle with asterisks
             if len(self.api_key) <= 10:
-                masked_key = self.api_key  # 如果太短就完整顯示
+                masked_key = self.api_key  # Show full if too short
             else:
                 prefix = self.api_key[:5]
                 suffix = self.api_key[-5:]
                 stars = "*" * (len(self.api_key) - 10)
                 masked_key = f"{prefix}{stars}{suffix}"
             
-            message = f"當前 API Key: {masked_key}\n請輸入 OpenAI API 金鑰:"
+            message = f"Current API Key: {masked_key}\nEnter OpenAI API Key:"
         else:
-            message = "請輸入 OpenAI API 金鑰:"
+            message = "Enter OpenAI API Key:"
         
         api_key = simpledialog.askstring(
-            "API 設定", 
+            "API Settings", 
             message,
             initialvalue=self.api_key, 
             show="*"
@@ -285,17 +285,17 @@ class GPTChatView(ttk.Frame):
             self.api_key = api_key
             self.config["api_key"] = api_key
             
-            # 更新其他設定
+            # Update other settings
             self.config["temperature"] = self.temp_var.get()
             self.config["max_tokens"] = self.max_tokens_var.get()
             self.config["model"] = self.model_var.get()
             save_config(self.config)
             
-            messagebox.showinfo("設定已儲存", "API金鑰和設定已成功儲存")
+            messagebox.showinfo("Settings Saved", "API key and settings have been successfully saved")
     
     def _clear_chat(self):
-        """清除聊天記錄"""
-        if messagebox.askyesno("確認", "確定要清除所有聊天記錄嗎？"):
+        """Clear chat history"""
+        if messagebox.askyesno("Confirm", "Are you sure you want to clear all chat history?"):
             self.messages = []
             self.config["chat_history"] = []
             save_config(self.config)
@@ -305,7 +305,7 @@ class GPTChatView(ttk.Frame):
             self.chat_display.config(state=tk.DISABLED)
     
     def _load_chat_history(self):
-        """載入聊天記錄"""
+        """Load chat history"""
         self.chat_display.config(state=tk.NORMAL)
         
         for msg in self.messages:
@@ -318,62 +318,62 @@ class GPTChatView(ttk.Frame):
         self.chat_display.see(tk.END)
     
     def _send_message(self, event=None):
-        """發送訊息到GPT"""
+        """Send message to GPT"""
         if not OPENAI_AVAILABLE:
-            messagebox.showerror("錯誤", "請安裝OpenAI套件: pip install openai")
+            messagebox.showerror("Error", "Please install the OpenAI package: pip install openai")
             return
             
         if not self.api_key:
-            messagebox.showerror("錯誤", "請先設定OpenAI API金鑰")
+            messagebox.showerror("Error", "Please set the OpenAI API key first")
             return
             
-        # 獲取原始輸入文本
+        # Get original input text
         original_text = self.input_field.get("1.0", tk.END).strip()
         if not original_text:
             return
         
-        # 清空輸入框
+        # Clear input field
         self.input_field.delete("1.0", tk.END)
         
-        # 添加說明前綴到實際發送給 API 的文本
-        if "```python" in original_text or "請分析這段程式碼" in original_text:
-            # 如果已經包含程式碼塊，添加 Thonny IDE 相關上下文
-            prompt_prefix = "我正在使用 Thonny IDE 編寫 Python 程式碼。以下是我想請你分析或協助的程式碼："
+        # Add context prefix to the text actually sent to API
+        if "```python" in original_text or "analyze this code" in original_text:
+            # If already contains code block, add Thonny IDE context
+            prompt_prefix = "I am using Thonny IDE to write Python code. Here is the code I would like you to analyze or help with:"
             text_to_display = original_text
             text_to_send = f"{prompt_prefix}\n\n{original_text}"
         else:
-            # 一般的對話內容
+            # General conversation content
             text_to_display = original_text
             text_to_send = original_text
         
-        # 顯示用戶訊息 (顯示原始文本，不包含前綴)
+        # Display user message (show original text, without prefix)
         self._display_user_message(text_to_display)
         
-        # 將添加了前綴的訊息加入對話歷史
+        # Add message with prefix to chat history
         self.messages.append({"role": "user", "content": text_to_send})
         
-        # 顯示等待訊息
+        # Show waiting message
         self.chat_display.config(state=tk.NORMAL)
         wait_msg_index = self.chat_display.index(tk.END)
-        self.chat_display.insert(tk.END, "GPT正在思考...\n\n", "waiting")
+        self.chat_display.insert(tk.END, "GPT is thinking...\n\n", "waiting")
         self.chat_display.tag_configure("waiting", foreground="gray")
         self.chat_display.config(state=tk.DISABLED)
         self.chat_display.see(tk.END)
         
-        # 在新線程中調用API
+        # Call API in new thread
         threading.Thread(target=self._call_openai_api, args=(wait_msg_index,)).start()
     
     def _call_openai_api(self, wait_msg_index):
-        """調用OpenAI API"""
+        """Call OpenAI API"""
         try:
-            # 使用正確的 API 版本
+            # Use correct API version
             try:
-                # 判斷是舊版還是新版 API
+                # Determine if using old or new API version
                 openai_version = getattr(openai, "__version__", "0.0.0")
                 is_new_version = int(openai_version.split('.')[0]) >= 1
                 
                 if is_new_version:
-                    # 新版 API (1.0.0 及以上)
+                    # New API (1.0.0 and above)
                     client = openai.OpenAI(api_key=self.api_key)
                     response = client.chat.completions.create(
                         model=self.model_var.get(),
@@ -383,7 +383,7 @@ class GPTChatView(ttk.Frame):
                     )
                     assistant_response = response.choices[0].message.content
                 else:
-                    # 舊版 API (0.x.x)
+                    # Old API (0.x.x)
                     openai.api_key = self.api_key
                     response = openai.ChatCompletion.create(
                         model=self.model_var.get(),
@@ -393,7 +393,7 @@ class GPTChatView(ttk.Frame):
                     )
                     assistant_response = response.choices[0].message.content
             except AttributeError:
-                # 如果上面的嘗試失敗，嘗試直接使用新版 API
+                # If above attempts fail, try using the new API directly
                 client = openai.OpenAI(api_key=self.api_key)
                 response = client.chat.completions.create(
                     model=self.model_var.get(),
@@ -403,38 +403,38 @@ class GPTChatView(ttk.Frame):
                 )
                 assistant_response = response.choices[0].message.content
             
-            # 移除等待訊息
+            # Remove waiting message
             self.chat_display.config(state=tk.NORMAL)
             wait_end_index = wait_msg_index + "+2l"
             self.chat_display.delete(wait_msg_index, wait_end_index)
             self.chat_display.config(state=tk.DISABLED)
             
-            # 顯示助手回應
+            # Display assistant response
             self._display_assistant_message(assistant_response)
             
-            # 將助手回應加入對話歷史
+            # Add assistant response to chat history
             self.messages.append({"role": "assistant", "content": assistant_response})
             
-            # 保存聊天記錄
+            # Save chat history
             self.config["chat_history"] = self.messages
             save_config(self.config)
             
         except Exception as e:
-            # 移除等待訊息
+            # Remove waiting message
             self.chat_display.config(state=tk.NORMAL)
             wait_end_index = wait_msg_index + "+2l"
             self.chat_display.delete(wait_msg_index, wait_end_index)
             
-            # 顯示錯誤訊息
-            self.chat_display.insert(tk.END, f"錯誤: {str(e)}\n\n", "error")
+            # Display error message
+            self.chat_display.insert(tk.END, f"Error: {str(e)}\n\n", "error")
             self.chat_display.tag_configure("error", foreground="red")
             self.chat_display.config(state=tk.DISABLED)
             self.chat_display.see(tk.END)
     
     def _display_user_message(self, text):
-        """顯示用戶訊息"""
+        """Display user message"""
         self.chat_display.config(state=tk.NORMAL)
-        self.chat_display.insert(tk.END, "👤 您: ", "user_prefix")
+        self.chat_display.insert(tk.END, "👤 You: ", "user_prefix")
         self.chat_display.insert(tk.END, text + "\n\n", "user_msg")
         self.chat_display.tag_configure("user_prefix", foreground="blue", font=("TkDefaultFont", 10, "bold"))
         self.chat_display.tag_configure("user_msg", foreground="black")
@@ -442,7 +442,7 @@ class GPTChatView(ttk.Frame):
         self.chat_display.see(tk.END)
     
     def _display_assistant_message(self, text):
-        """顯示助手訊息"""
+        """Display assistant message"""
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.insert(tk.END, "🤖 GPT: ", "assistant_prefix")
         self.chat_display.insert(tk.END, text + "\n\n", "assistant_msg")
@@ -452,45 +452,45 @@ class GPTChatView(ttk.Frame):
         self.chat_display.see(tk.END)
     
     def _insert_current_code(self):
-        """插入當前編輯中的程式碼"""
+        """Insert current editor code"""
         try:
             editor = get_current_editor()
             if editor:
                 code = get_editor_text(editor)
                 if code and code.strip():
-                    # 將程式碼加到輸入框
+                    # Add code to input field
                     current_text = self.input_field.get("1.0", tk.END).strip()
                     
                     if current_text:
                         current_text += "\n\n"
                     
-                    current_text += "```python\n" + code + "```\n\n請分析這段程式碼：\n"
+                    current_text += "```python\n" + code + "```\n\nPlease analyze this code:\n"
                     
                     self.input_field.delete("1.0", tk.END)
                     self.input_field.insert("1.0", current_text)
                 else:
-                    messagebox.showinfo("提示", "目前編輯器中沒有程式碼")
+                    messagebox.showinfo("Info", "No code found in the current editor")
             else:
-                messagebox.showinfo("提示", "請先打開一個程式碼檔案")
+                messagebox.showinfo("Info", "Please open a code file first")
         except Exception as e:
-            messagebox.showerror("錯誤", f"無法獲取當前程式碼: {str(e)}")
+            messagebox.showerror("Error", f"Could not get current code: {str(e)}")
     
     def prepare_code_analysis(self):
-        """準備程式碼分析，如果有程式碼，則將其插入輸入框並聚焦視窗"""
+        """Prepare code analysis, insert code into input field and focus window if code exists"""
         editor = get_current_editor()
         if editor:
             code = get_editor_text(editor)
             if code and code.strip():
-                # 將程式碼加到輸入框
-                current_text = "```python\n" + code + "```\n\n請分析這段程式碼：\n"
+                # Add code to input field
+                current_text = "```python\n" + code + "```\n\nPlease analyze this code:\n"
                 
                 self.input_field.delete("1.0", tk.END)
                 self.input_field.insert("1.0", current_text)
                 
-                # 聚焦輸入框
+                # Focus input field
                 self.input_field.focus_set()
                 
-                # 確保此面板是可見的
+                # Ensure this panel is visible
                 wb = get_workbench()
                 wb.show_view("GPTChatView")
                 
@@ -498,45 +498,45 @@ class GPTChatView(ttk.Frame):
         return False
 
     def _handle_return(self, event):
-        """處理按下 Enter 鍵的事件"""
-        # 檢查是否單純按下 Enter 鍵（沒有同時按下 Ctrl 或其他修飾鍵）
-        if not (event.state & 0x0004):  # 0x0004 代表 Control 鍵
-            # 獲取當前文本內容
+        """Handle Enter key press event"""
+        # Check if Enter key is pressed without Ctrl key
+        if not (event.state & 0x0004):  # 0x0004 represents Control key
+            # Get current text content
             text = self.input_field.get("1.0", tk.END).strip()
             
-            # 如果內容不為空，則發送訊息
+            # If content is not empty, send message
             if text:
                 self._send_message()
-                return "break"  # 阻止原始 Enter 鍵行為（換行）
+                return "break"  # Prevent original Enter key behavior (newline)
             else:
-                # 如果輸入框為空，則允許換行（正常行為）
+                # If input field is empty, allow newline (normal behavior)
                 return None
-        # 對於 Ctrl+Enter，保持原有的行為（添加新行）
+        # For Ctrl+Enter, keep original behavior (add newline)
         return None
 
-# 簡單對話框模式的GPT助手 - 現在改為顯示右側面板
+# Simple dialog mode GPT assistant - now shows right panel instead
 def gpt_assistant():
-    """顯示 GPT 助手聊天視窗 (現在是顯示右側面板)"""
+    """Show GPT assistant chat window (now shows right panel)"""
     global _global_gpt_chat_view
     
     if not OPENAI_AVAILABLE:
-        messagebox.showerror("錯誤", "請安裝OpenAI套件: pip install openai")
+        messagebox.showerror("Error", "Please install the OpenAI package: pip install openai")
         return
     
-    # 如果側邊面板尚未創建，先確保它可見
+    # If side panel is not yet created, ensure it's visible
     wb = get_workbench()
     wb.show_view("GPTChatView")
     
-    # 如果側邊面板實例存在，直接使用它
+    # If side panel instance exists, use it directly
     if _global_gpt_chat_view:
-        # 詢問是否要分析當前代碼
+        # Ask whether to analyze current code
         editor = get_current_editor()
         if editor:
             code = get_editor_text(editor)
             if code and code.strip():
-                use_code = messagebox.askyesno("程式碼分析", 
-                                         "是否要將當前編輯器中的程式碼送給GPT分析？")
+                use_code = messagebox.askyesno("Code Analysis", 
+                                         "Do you want to send the current editor code to GPT for analysis?")
                 if use_code:
                     _global_gpt_chat_view.prepare_code_analysis()
     else:
-        messagebox.showinfo("提示", "請先開啟 GPT 聊天視窗 (在「檢視」選單中)")
+        messagebox.showinfo("Info", "Please open the GPT Chat view first (from the View menu)")
